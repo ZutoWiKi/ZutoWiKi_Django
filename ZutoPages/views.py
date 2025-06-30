@@ -1,6 +1,7 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
+from .models import User
 
 
 @api_view(["GET"])
@@ -18,10 +19,9 @@ def create_user(request):
             {"error": "Name and email are required"}, status=status.HTTP_400_BAD_REQUEST
         )
 
+    user = User.objects.create(name=name, email=email)
+
     return Response(
-        {
-            "message": f"User {name} created successfully!",
-            "user": {"name": name, "email": email},
-        },
+        {"id": user.id, "name": user.name, "email": user.email},
         status=status.HTTP_201_CREATED,
     )
