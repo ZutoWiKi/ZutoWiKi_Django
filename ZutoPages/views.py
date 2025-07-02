@@ -5,7 +5,32 @@ from .models import User
 
 
 @api_view(["GET"])
-def hello_world(request):
+def novel(request):
+    return Response({"message": "Hello novel!"}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def poem(request):
+    return Response({"message": "Hello poem!"}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def music(request):
+    return Response({"message": "Hello music!"}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def game(request):
+    return Response({"message": "Hello game!"}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def movie(request):
+    return Response({"message": "Hello movie!"}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def perfomance(request):
     return Response({"message": "Hello from Django!"}, status=status.HTTP_200_OK)
 
 
