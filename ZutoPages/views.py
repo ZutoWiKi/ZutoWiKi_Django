@@ -30,8 +30,13 @@ def movie(request):
 
 
 @api_view(["GET"])
-def perfomance(request):
-    return Response({"message": "Hello from Django!"}, status=status.HTTP_200_OK)
+def performance(request):
+    return Response({"message": "Hello performance!"}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def animation(request):
+    return Response({"message": "Hello animation!"}, status=status.HTTP_200_OK)
 
 
 @api_view(["POST"])

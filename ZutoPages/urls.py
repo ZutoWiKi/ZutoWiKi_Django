@@ -7,5 +7,6 @@ urlpatterns = [
     path("music/", views.music, name="music"),
     path("game/", views.game, name="game"),
     path("movie/", views.movie, name="movie"),
-    path("perfomance/", views.perfomance, name="perfomance"),
+    path("performance/", views.performance, name="performance"),
+    path("animation/", views.animation, name="animation"),
 ]
