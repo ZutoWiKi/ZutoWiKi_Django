@@ -57,23 +57,11 @@ class RegisterView(generics.GenericAPIView):
         }, status=status.HTTP_201_CREATED)
     
 class MypageView(APIView):
-    permission_classes = [AllowAny]
-    authentication_classes = []
-
-    def post(self, request):
-        email = request.data.get('email')
-        password = request.data.get('password')
-
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            return Response({'detail':'이메일 또는 비밀번호가 올바르지 않습니다.'},
-                             status=401)
-
-        if not user.check_password(password):
-            return Response({'detail':'이메일 또는 비밀번호가 올바르지 않습니다.'},
-                             status=401)
-
-        token, _ = Token.objects.get_or_create(user=user)
-        return Response({'token':token.key})
-    
+    def get(self, request):
+        user = request.user
+        return Response({
+            "id": user.id,
+            "username": user.username,
+            "email": user.email,
+            "date_joined": user.date_joined,
+        })
