@@ -6,6 +6,6 @@ from .views import MypageView
 
 urlpatterns = [
     path("login/", LoginView.as_view(), name="login"),
-    path("register/", RegisterView.as_view(), name="create_user"),
+    path("register/", RegisterView.as_view(), name="register"),
     path("mypage/", MypageView.as_view(), name="mypage"),
 ]
