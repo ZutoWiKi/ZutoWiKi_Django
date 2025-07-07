@@ -32,3 +32,6 @@ class Work(models.Model):
 
     def __str__(self):
         return f"[{self.get_type_index_display()}] {self.title}"
+    
+class Write(models.Model):
+    
