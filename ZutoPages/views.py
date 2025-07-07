@@ -2,42 +2,31 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from .models import User
+from .models import Work
+from .serializers import WorkSerializer
 
 
 @api_view(["GET"])
-def novel(request):
-    return Response({"message": "Hello novel!"}, status=status.HTTP_200_OK)
+def work(request):
+    typeindex = request.query_params.get("type", None)
 
+    qs = Work.objects.all()
+    if typeindex is not None:
+        try:
+            idx = int(typeindex)
+        except ValueError:
+            return Response(
+                {"error": "typeindex는 정수여야 합니다."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        qs = qs.filter(type_index=idx)
 
-@api_view(["GET"])
-def poem(request):
-    return Response({"message": "Hello poem!"}, status=status.HTTP_200_OK)
+    serializer = WorkSerializer(qs, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
 
-
-@api_view(["GET"])
-def music(request):
-    return Response({"message": "Hello music!"}, status=status.HTTP_200_OK)
-
-
-@api_view(["GET"])
-def game(request):
-    return Response({"message": "Hello game!"}, status=status.HTTP_200_OK)
-
-
-@api_view(["GET"])
-def movie(request):
-    return Response({"message": "Hello movie!"}, status=status.HTTP_200_OK)
-
-
-@api_view(["GET"])
-def performance(request):
-    return Response({"message": "Hello performance!"}, status=status.HTTP_200_OK)
-
-
-@api_view(["GET"])
-def animation(request):
-    return Response({"message": "Hello animation!"}, status=status.HTTP_200_OK)
-
+@api_view(["POST"])
+def write(request):
+    return Response({"message": "Write"}, status=status.HTTP_200_OK)
 
 @api_view(["POST"])
 def create_user(request):
