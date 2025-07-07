@@ -5,24 +5,33 @@ from .models import User
 from .models import Work
 from .serializers import WorkSerializer
 
-
-@api_view(["GET"])
+@api_view(["GET", "POST"])
 def work(request):
-    typeindex = request.query_params.get("type", None)
+    if request.method == "GET":
+        typeindex = request.query_params.get("type", None)
 
-    qs = Work.objects.all()
-    if typeindex is not None:
-        try:
-            idx = int(typeindex)
-        except ValueError:
-            return Response(
-                {"error": "typeindex는 정수여야 합니다."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-        qs = qs.filter(type_index=idx)
+        qs = Work.objects.all()
+        if typeindex is not None:
+            try:
+                idx = int(typeindex)
+            except ValueError:
+                return Response(
+                    {"error": "typeindex는 정수여야 합니다."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            qs = qs.filter(type_index=idx)
 
-    serializer = WorkSerializer(qs, many=True)
-    return Response(serializer.data, status=status.HTTP_200_OK)
+        serializer = WorkSerializer(qs, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+        
+    elif request.method == "POST":
+        serializer = WorkSerializer(data=request.data)
+    if serializer.is_valid():
+        instance = serializer.save()
+        out = WorkSerializer(instance)
+        return Response(out.data, status=status.HTTP_201_CREATED)
+
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(["POST"])
 def write(request):
