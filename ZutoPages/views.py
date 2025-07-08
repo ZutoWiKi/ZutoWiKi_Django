@@ -2,10 +2,11 @@ from rest_framework.decorators import api_view
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
+from rest_framework import serializers
 from rest_framework import status
 from .models import User, Work, Write, WriteLike
 from .serializers import WorkSerializer, WriteSerializer
-from django.db.models import F
+from django.db.models import F, Count
 from django.db import transaction
 from django.conf import settings
 import uuid, os
@@ -244,3 +245,15 @@ def update_write_likes(request, write_id):
         return Response(
             {"error": "해석글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND
         )
+
+
+@api_view(["GET"])
+def popular(request):
+    # write__writelike 로 Join → WriteLike 테이블의 수를 Count
+    qs = (
+        Work.objects
+            .annotate(num_likes=Count('write__writelike'))
+            .order_by('-num_likes')[:4]
+    )
+    serializer = WorkSerializer(qs, many=True)
+    return Response({'works': serializer.data}, status=status.HTTP_200_OK)
