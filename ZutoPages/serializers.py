@@ -1,5 +1,8 @@
 from rest_framework import serializers
-from .models import Work, Write, User, WriteLike
+from django.contrib.auth import get_user_model
+from .models import Work, Write, WriteLike
+
+User = get_user_model()
 
 
 class WorkSerializer(serializers.ModelSerializer):
@@ -21,7 +24,8 @@ class WorkSerializer(serializers.ModelSerializer):
 
 
 class WriteSerializer(serializers.ModelSerializer):
-    user_name = serializers.CharField(source="user.name", read_only=True)
+    # Django 기본 User 모델은 username 필드를 사용
+    user_name = serializers.CharField(source="user.username", read_only=True)
     work_title = serializers.CharField(source="work.title", read_only=True)
     work_author = serializers.CharField(source="work.author", read_only=True)
     is_liked = serializers.SerializerMethodField()  # 현재 사용자의 좋아요 상태
@@ -57,12 +61,13 @@ class WriteSerializer(serializers.ModelSerializer):
     def get_is_liked(self, obj):
         """현재 사용자가 이 게시글을 좋아요 했는지 확인"""
         request = self.context.get("request")
-        if request and hasattr(request, "user_id"):
+        if request and hasattr(request, "user_id") and request.user_id:
             try:
                 return WriteLike.objects.filter(
                     user_id=request.user_id, write=obj
                 ).exists()
-            except:
+            except Exception as e:
+                print(f"좋아요 상태 확인 중 오류: {e}")
                 return False
         return False
 
