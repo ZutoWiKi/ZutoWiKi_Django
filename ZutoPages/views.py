@@ -1,9 +1,10 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
-from .models import User, Work, Write
+from .models import User, Work, Write, WriteLike
 from .serializers import WorkSerializer, WriteSerializer
 from django.db.models import F
+from django.db import transaction
 
 TYPE_CHOICES = {
     "novel": 0,
@@ -14,6 +15,25 @@ TYPE_CHOICES = {
     "performance": 5,
     "animation": 6,
 }
+
+
+# JWT 토큰에서 user_id를 추출하는 헬퍼 함수 (실제 JWT 구현에 맞게 수정)
+def get_user_id_from_token(request):
+    """토큰에서 사용자 ID 추출 - 실제 JWT 구현에 맞게 수정 필요"""
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+        # 여기서 실제 JWT 디코딩 로직 구현
+        # 임시로 하드코딩 (실제로는 JWT 라이브러리 사용)
+        try:
+            # JWT 디코딩 로직 필요
+            # import jwt
+            # payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
+            # return payload['user_id']
+            return 1  # 임시 user_id
+        except:
+            return None
+    return None
 
 
 @api_view(["GET", "POST"])
@@ -92,7 +112,9 @@ def write(request):
         # 최신순 정렬
         qs = qs.order_by("-created_at")
 
-        serializer = WriteSerializer(qs, many=True)
+        # 현재 사용자 ID를 context에 추가
+        request.user_id = get_user_id_from_token(request)
+        serializer = WriteSerializer(qs, many=True, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     elif request.method == "POST":
@@ -135,7 +157,9 @@ def update_write_views(request, write_id):
         write.save()
         write.refresh_from_db()
 
-        serializer = WriteSerializer(write)
+        # 좋아요 상태 포함해서 반환
+        request.user_id = get_user_id_from_token(request)
+        serializer = WriteSerializer(write, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
     except Write.DoesNotExist:
         return Response(
@@ -145,26 +169,51 @@ def update_write_views(request, write_id):
 
 @api_view(["PUT"])
 def update_write_likes(request, write_id):
-    """해석글 좋아요 수 증가/감소"""
+    """해석글 좋아요 토글"""
     try:
         write = Write.objects.get(id=write_id)
-        action = request.data.get("action", "increase")  # increase 또는 decrease
+        user_id = get_user_id_from_token(request)
 
-        if action == "increase":
-            write.likes = F("likes") + 1
-        elif action == "decrease":
-            write.likes = F("likes") - 1
-        else:
+        if not user_id:
             return Response(
-                {"error": "action은 'increase' 또는 'decrease'여야 합니다."},
-                status=status.HTTP_400_BAD_REQUEST,
+                {"error": "로그인이 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED
             )
 
-        write.save()
-        write.refresh_from_db()
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response(
+                {"error": "사용자를 찾을 수 없습니다."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
-        serializer = WriteSerializer(write)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        with transaction.atomic():
+            # 좋아요 상태 확인
+            like_obj, created = WriteLike.objects.get_or_create(user=user, write=write)
+
+            if created:
+                # 새로 좋아요를 누른 경우
+                write.likes = F("likes") + 1
+                is_liked = True
+                action = "liked"
+            else:
+                # 이미 좋아요를 누른 경우 - 좋아요 취소
+                like_obj.delete()
+                write.likes = F("likes") - 1
+                is_liked = False
+                action = "unliked"
+
+            write.save()
+            write.refresh_from_db()
+
+        # 업데이트된 데이터 반환
+        request.user_id = user_id
+        serializer = WriteSerializer(write, context={"request": request})
+        response_data = serializer.data
+        response_data["action"] = action  # 프론트엔드에서 애니메이션에 사용
+
+        return Response(response_data, status=status.HTTP_200_OK)
+
     except Write.DoesNotExist:
         return Response(
             {"error": "해석글을 찾을 수 없습니다."}, status=status.HTTP_404_NOT_FOUND

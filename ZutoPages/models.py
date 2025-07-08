@@ -46,3 +46,19 @@ class Write(models.Model):
     parentID = models.IntegerField(default=0)
 
     pass
+
+
+# 새로 추가: 사용자별 좋아요 상태를 관리하는 모델
+class WriteLike(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    write = models.ForeignKey(Write, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = (
+            "user",
+            "write",
+        )  # 한 사용자는 한 게시글에 한 번만 좋아요 가능
+
+    def __str__(self):
+        return f"{self.user.name} likes {self.write.title}"
