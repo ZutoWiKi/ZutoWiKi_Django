@@ -1,8 +1,14 @@
-from rest_framework.decorators import api_view
+from rest_framework.decorators import (
+    api_view,
+    authentication_classes,
+    permission_classes,
+)
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
 from .models import User, Work, Write, WriteLike
 from .serializers import WorkSerializer, WriteSerializer
 from django.db.models import F
@@ -10,13 +16,16 @@ from django.db import transaction
 from django.conf import settings
 import uuid, os
 
+
 class ImageUploadView(APIView):
     parser_classes = [MultiPartParser, FormParser]
 
     def post(self, request, *args, **kwargs):
         file_obj = request.FILES.get("file")
         if not file_obj:
-            return Response({"detail": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "No file provided"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         # 확장자 보존, UUID로 파일명 중복 방지
         ext = os.path.splitext(file_obj.name)[1]
@@ -32,6 +41,7 @@ class ImageUploadView(APIView):
         url = request.build_absolute_uri(settings.MEDIA_URL + filename)
         return Response({"url": url}, status=status.HTTP_201_CREATED)
 
+
 TYPE_CHOICES = {
     "novel": 0,
     "poem": 1,
@@ -41,25 +51,6 @@ TYPE_CHOICES = {
     "performance": 5,
     "animation": 6,
 }
-
-
-# JWT 토큰에서 user_id를 추출하는 헬퍼 함수 (실제 JWT 구현에 맞게 수정)
-def get_user_id_from_token(request):
-    """토큰에서 사용자 ID 추출 - 실제 JWT 구현에 맞게 수정 필요"""
-    auth_header = request.headers.get("Authorization")
-    if auth_header and auth_header.startswith("Bearer "):
-        token = auth_header.split(" ")[1]
-        # 여기서 실제 JWT 디코딩 로직 구현
-        # 임시로 하드코딩 (실제로는 JWT 라이브러리 사용)
-        try:
-            # JWT 디코딩 로직 필요
-            # import jwt
-            # payload = jwt.decode(token, settings.SECRET_KEY, algorithms=['HS256'])
-            # return payload['user_id']
-            return 1  # 임시 user_id
-        except:
-            return None
-    return None
 
 
 @api_view(["GET", "POST"])
@@ -138,8 +129,6 @@ def write(request):
         # 최신순 정렬
         qs = qs.order_by("-created_at")
 
-        # 현재 사용자 ID를 context에 추가
-        request.user_id = get_user_id_from_token(request)
         serializer = WriteSerializer(qs, many=True, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
@@ -183,8 +172,6 @@ def update_write_views(request, write_id):
         write.save()
         write.refresh_from_db()
 
-        # 좋아요 상태 포함해서 반환
-        request.user_id = get_user_id_from_token(request)
         serializer = WriteSerializer(write, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
     except Write.DoesNotExist:
@@ -194,24 +181,13 @@ def update_write_views(request, write_id):
 
 
 @api_view(["PUT"])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def update_write_likes(request, write_id):
     """해석글 좋아요 토글"""
     try:
         write = Write.objects.get(id=write_id)
-        user_id = get_user_id_from_token(request)
-
-        if not user_id:
-            return Response(
-                {"error": "로그인이 필요합니다."}, status=status.HTTP_401_UNAUTHORIZED
-            )
-
-        try:
-            user = User.objects.get(id=user_id)
-        except User.DoesNotExist:
-            return Response(
-                {"error": "사용자를 찾을 수 없습니다."},
-                status=status.HTTP_404_NOT_FOUND,
-            )
+        user = request.user
 
         with transaction.atomic():
             # 좋아요 상태 확인
@@ -233,7 +209,6 @@ def update_write_likes(request, write_id):
             write.refresh_from_db()
 
         # 업데이트된 데이터 반환
-        request.user_id = user_id
         serializer = WriteSerializer(write, context={"request": request})
         response_data = serializer.data
         response_data["action"] = action  # 프론트엔드에서 애니메이션에 사용

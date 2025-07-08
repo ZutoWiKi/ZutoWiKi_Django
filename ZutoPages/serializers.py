@@ -61,11 +61,9 @@ class WriteSerializer(serializers.ModelSerializer):
     def get_is_liked(self, obj):
         """현재 사용자가 이 게시글을 좋아요 했는지 확인"""
         request = self.context.get("request")
-        if request and hasattr(request, "user_id") and request.user_id:
+        if request and request.user and request.user.is_authenticated:
             try:
-                return WriteLike.objects.filter(
-                    user_id=request.user_id, write=obj
-                ).exists()
+                return WriteLike.objects.filter(user=request.user, write=obj).exists()
             except Exception as e:
                 print(f"좋아요 상태 확인 중 오류: {e}")
                 return False
