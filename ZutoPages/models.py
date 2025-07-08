@@ -36,4 +36,13 @@ class Work(models.Model):
 
 
 class Write(models.Model):
+    title = models.CharField(max_length=100)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    content = models.TextField(blank=True)
+    work = models.ForeignKey(Work, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    views = models.IntegerField(default=0)
+    likes = models.IntegerField(default=0)
+    parentID = models.IntegerField(default=0)
+
     pass

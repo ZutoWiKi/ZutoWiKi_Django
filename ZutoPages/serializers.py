@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Work
+from .models import Work, Write, User
 
 
 class WorkSerializer(serializers.ModelSerializer):
@@ -18,3 +18,51 @@ class WorkSerializer(serializers.ModelSerializer):
         # write_only 필드 제거하고 읽기용 필드 추가
         data.pop("typeindex", None)
         return data
+
+
+class WriteSerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source="user.name", read_only=True)
+    work_title = serializers.CharField(source="work.title", read_only=True)
+    work_author = serializers.CharField(source="work.author", read_only=True)
+
+    class Meta:
+        model = Write
+        fields = (
+            "id",
+            "title",
+            "user",
+            "user_name",
+            "content",
+            "work",
+            "work_title",
+            "work_author",
+            "created_at",
+            "views",
+            "likes",
+            "parentID",
+        )
+        read_only_fields = (
+            "id",
+            "created_at",
+            "views",
+            "likes",
+            "user_name",
+            "work_title",
+            "work_author",
+        )
+
+    def validate_user(self, value):
+        """사용자 존재 여부 검증"""
+        try:
+            User.objects.get(id=value.id)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("존재하지 않는 사용자입니다.")
+        return value
+
+    def validate_work(self, value):
+        """작품 존재 여부 검증"""
+        try:
+            Work.objects.get(id=value.id)
+        except Work.DoesNotExist:
+            raise serializers.ValidationError("존재하지 않는 작품입니다.")
+        return value
