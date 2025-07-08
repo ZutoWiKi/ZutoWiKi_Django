@@ -1,10 +1,36 @@
 from rest_framework.decorators import api_view
+from rest_framework.views import APIView
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
 from rest_framework import status
 from .models import User, Work, Write, WriteLike
 from .serializers import WorkSerializer, WriteSerializer
 from django.db.models import F
 from django.db import transaction
+from django.conf import settings
+import uuid, os
+
+class ImageUploadView(APIView):
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request, *args, **kwargs):
+        file_obj = request.FILES.get("file")
+        if not file_obj:
+            return Response({"detail": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # 확장자 보존, UUID로 파일명 중복 방지
+        ext = os.path.splitext(file_obj.name)[1]
+        filename = f"{uuid.uuid4().hex}{ext}"
+        save_path = os.path.join(settings.MEDIA_ROOT, filename)
+
+        # 실제 저장
+        with open(save_path, "wb+") as dest:
+            for chunk in file_obj.chunks():
+                dest.write(chunk)
+
+        # 완전한 URL 만들어서 반환
+        url = request.build_absolute_uri(settings.MEDIA_URL + filename)
+        return Response({"url": url}, status=status.HTTP_201_CREATED)
 
 TYPE_CHOICES = {
     "novel": 0,

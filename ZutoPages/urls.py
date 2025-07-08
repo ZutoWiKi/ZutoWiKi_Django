@@ -15,4 +15,5 @@ urlpatterns = [
         name="update_write_likes",
     ),
     path("user/", views.create_user, name="create_user"),
+    path("upload/", views.ImageUploadView.as_view(), name="image-upload"),
 ]

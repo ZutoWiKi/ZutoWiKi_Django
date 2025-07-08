@@ -138,3 +138,6 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     "http://172.30.5.91:3000",
 ]
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
