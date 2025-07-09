@@ -108,10 +108,19 @@ class WriteSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("존재하지 않는 작품입니다.")
         return value
 
+
 class CommentSerializer(serializers.ModelSerializer):
-    user = serializers.StringRelatedField(read_only=True)
+    user_name = serializers.CharField(source="user.username", read_only=True)
 
     class Meta:
         model = Comment
-        fields = ['id', 'user', 'write', 'content', 'created_at', "likes", "parentID"]
-        read_only_fields = ['id', 'user', 'created_at']
+        fields = [
+            "id",
+            "user_name",
+            "write",
+            "content",
+            "created_at",
+            "likes",
+            "parentID",
+        ]
+        read_only_fields = ["id", "user_name", "created_at"]

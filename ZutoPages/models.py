@@ -34,7 +34,7 @@ class Work(models.Model):
 
 class Write(models.Model):
     title = models.CharField(max_length=100)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)  # Django User 사용
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     content = models.TextField(blank=True)
     work = models.ForeignKey(Work, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -44,23 +44,26 @@ class Write(models.Model):
 
 
 class WriteLike(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)  # Django User 사용
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     write = models.ForeignKey(Write, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         unique_together = ("user", "write")
 
+
 class Comment(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)  # Django User 사용
-    write = models.ForeignKey('Write', on_delete=models.CASCADE, related_name='comments')
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    write = models.ForeignKey(
+        "Write", on_delete=models.CASCADE, related_name="comments"
+    )
     content = models.TextField(blank=True, max_length=300)
     created_at = models.DateTimeField(auto_now_add=True)
     likes = models.IntegerField(default=0)
     parentID = models.IntegerField(default=0)
-    
+
     class Meta:
-        ordering = ['created_at']
+        ordering = ["created_at"]
 
     def __str__(self):
         return f"{self.user.username}: {self.content[:20]}"

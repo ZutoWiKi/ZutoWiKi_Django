@@ -256,13 +256,14 @@ def popular_by_views(request):
     serializer = WorkSerializer(qs, many=True)
     return Response({"works": serializer.data}, status=status.HTTP_200_OK)
 
+
 class CommentViewSet(viewsets.ModelViewSet):
     queryset = Comment.objects.all()
     serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
-        write_id = self.request.query_params.get('write')
+        write_id = self.request.query_params.get("write")
         if write_id:
             return self.queryset.filter(write_id=write_id)
         return self.queryset
