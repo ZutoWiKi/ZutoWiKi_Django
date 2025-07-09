@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from .models import Work, Write, WriteLike
+from .models import Work, Write, WriteLike, Comment
 
 User = get_user_model()
 
@@ -107,3 +107,11 @@ class WriteSerializer(serializers.ModelSerializer):
         except Work.DoesNotExist:
             raise serializers.ValidationError("존재하지 않는 작품입니다.")
         return value
+
+class CommentSerializer(serializers.ModelSerializer):
+    user = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ['id', 'user', 'write', 'content', 'created_at', "likes", "ParentID"]
+        read_only_fields = ['id', 'user', 'created_at']

@@ -1,5 +1,10 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
+from rest_framework.routers import DefaultRouter
+from .views import CommentViewSet
+
+router = DefaultRouter()
+router.register(r'comments', CommentViewSet, basename='comment')
 
 urlpatterns = [
     path("work/", views.work, name="work"),
@@ -18,4 +23,5 @@ urlpatterns = [
     path("upload/", views.ImageUploadView.as_view(), name="image-upload"),
     path("popular/", views.popular, name="popular"),
     path("popular/views/", views.popular_by_views, name="popular_by_views"),
+    path('comment/', include(router.urls), name="comment"),
 ]

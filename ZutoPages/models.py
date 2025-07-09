@@ -50,3 +50,17 @@ class WriteLike(models.Model):
 
     class Meta:
         unique_together = ("user", "write")
+
+class Comment(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)  # Django User 사용
+    write = models.ForeignKey('Write', on_delete=models.CASCADE, related_name='comments')
+    content = models.TextField(blank=True, max_length=300)
+    created_at = models.DateTimeField(auto_now_add=True)
+    likes = models.IntegerField(default=0)
+    parentID = models.IntegerField(default=0)
+    
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.user.username}: {self.content[:20]}"

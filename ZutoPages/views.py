@@ -6,12 +6,11 @@ from rest_framework.decorators import (
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
-from rest_framework import serializers
-from rest_framework import status
+from rest_framework import status, serializers, viewsets, permissions
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-from .models import User, Work, Write, WriteLike
-from .serializers import WorkSerializer, WriteSerializer
+from .models import User, Work, Write, WriteLike, Comment
+from .serializers import WorkSerializer, WriteSerializer, CommentSerializer
 from django.db.models import F, Count, Sum
 from django.db import transaction
 from django.conf import settings
@@ -256,3 +255,17 @@ def popular_by_views(request):
     ]  # 총 조회수 순으로 정렬
     serializer = WorkSerializer(qs, many=True)
     return Response({"works": serializer.data}, status=status.HTTP_200_OK)
+
+class CommentViewSet(viewsets.ModelViewSet):
+    queryset = Comment.objects.all()
+    serializer_class = CommentSerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        write_id = self.request.query_params.get('write')
+        if write_id:
+            return self.queryset.filter(write_id=write_id)
+        return self.queryset
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
