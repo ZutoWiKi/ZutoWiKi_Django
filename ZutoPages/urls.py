@@ -17,4 +17,5 @@ urlpatterns = [
     path("user/", views.create_user, name="create_user"),
     path("upload/", views.ImageUploadView.as_view(), name="image-upload"),
     path("popular/", views.popular, name="popular"),
+    path("popular/views/", views.popular_by_views, name="popular_by_views"),
 ]

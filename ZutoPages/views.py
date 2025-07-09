@@ -12,7 +12,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
 from .models import User, Work, Write, WriteLike
 from .serializers import WorkSerializer, WriteSerializer
-from django.db.models import F, Count
+from django.db.models import F, Count, Sum
 from django.db import transaction
 from django.conf import settings
 import uuid, os
@@ -222,13 +222,37 @@ def update_write_likes(request, write_id):
         )
 
 
+from django.db.models import Sum
+
+
+from django.db.models import Sum
+
+
 @api_view(["GET"])
 def popular(request):
     # write__writelike 로 Join → WriteLike 테이블의 수를 Count
-    qs = (
-        Work.objects
-            .annotate(num_likes=Count('write__writelike'))
-            .order_by('-num_likes')[:4]
-    )
+    # write__views 의 합계도 함께 계산
+    # write 개수도 함께 계산 (해석글 개수 순으로 정렬)
+    qs = Work.objects.annotate(
+        num_likes=Count("write__writelike"),
+        total_views=Sum("write__views"),
+        write_count=Count("write"),
+    ).order_by("-write_count")[
+        :4
+    ]  # 해석글 개수 순으로 정렬
     serializer = WorkSerializer(qs, many=True)
-    return Response({'works': serializer.data}, status=status.HTTP_200_OK)
+    return Response({"works": serializer.data}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+def popular_by_views(request):
+    # 조회수 순으로 정렬된 인기 작품 목록
+    qs = Work.objects.annotate(
+        num_likes=Count("write__writelike"),
+        total_views=Sum("write__views"),
+        write_count=Count("write"),
+    ).order_by("-total_views")[
+        :4
+    ]  # 총 조회수 순으로 정렬
+    serializer = WorkSerializer(qs, many=True)
+    return Response({"works": serializer.data}, status=status.HTTP_200_OK)

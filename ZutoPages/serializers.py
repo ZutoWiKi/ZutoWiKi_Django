@@ -10,16 +10,39 @@ class WorkSerializer(serializers.ModelSerializer):
     coverImage = serializers.URLField(
         source="cover_image", required=False, allow_blank=True
     )
+    # 인기 작품 조회시 좋아요 수와 조회수 정보 추가
+    num_likes = serializers.IntegerField(read_only=True)
+    total_views = serializers.IntegerField(read_only=True)
+    write_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Work
-        fields = ("id", "typeindex", "title", "author", "coverImage", "description")
+        fields = (
+            "id",
+            "typeindex",
+            "title",
+            "author",
+            "coverImage",
+            "description",
+            "num_likes",
+            "total_views",
+            "write_count",
+        )
 
     def to_representation(self, instance):
         # GET 요청시 응답 데이터 구조
         data = super().to_representation(instance)
         # write_only 필드 제거하고 읽기용 필드 추가
         data.pop("typeindex", None)
+
+        # annotate된 필드가 없으면 None으로 설정 (일반 작품 조회시)
+        if not hasattr(instance, "num_likes"):
+            data.pop("num_likes", None)
+        if not hasattr(instance, "total_views"):
+            data.pop("total_views", None)
+        if not hasattr(instance, "write_count"):
+            data.pop("write_count", None)
+
         return data
 
 
