@@ -25,7 +25,7 @@ SECRET_KEY = "django-insecure-d*)ja!(y9nj4f6a5)tzy^@vnrr$afwz#&v24ki-556$5e=m3=@
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['34.64.211.239', 'yoonseul.com']
 
 
 # Application definition
@@ -145,3 +145,6 @@ CORS_ALLOWED_ORIGINS = [
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
+STATIC_URL  = '/staticfiles/'
+STATIC_ROOT  = BASE_DIR / 'staticfiles'
